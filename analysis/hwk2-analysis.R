@@ -17,7 +17,8 @@ pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table
 # Read data and set workspace for knitr -------------------------------
 hcris.data.v1996 <- readRDS('data/output/HCRIS_Data_v1996.rds')
 hcris.data.v2010 <- readRDS('data/output/HCRIS_Data_v2010.rds')
-hcris.data <- readRDS('data/output/HCRIS_Data.rds')
+hcris.data <- readRDS('data/output/HCRIS_Data.rds') %>%
+  filter(year>=2008, year<=2015)
 
 
 # Create objects for qmd ----------------------------------------------
@@ -36,7 +37,10 @@ final.hcris=rbind(final.hcris.v1996,hcris.data.v2010) %>%
          tot_discounts=abs(tot_discounts), hrrp_payment=abs(hrrp_payment)) %>%
   mutate(fyear=year(fy_end)) %>%
   arrange(provider_number,fyear) %>%
-  select(-year)
+  select(-year) %>%
+  filter(fyear>=2008, fyear<=2015)
+
+hcris.data %>% ungroup() %>% summarize(count=n_distinct(provider_number))
 
 ## count of hospitals/provider_number by year
 dup.count <- final.hcris %>% 
@@ -52,7 +56,7 @@ fig.dup <- dup.count %>%
     y="Number of Hospitals",
     title=""
   ) +
-  theme_bw() +
+  theme_bw() + scale_y_continuous(limits=c(0,300)) +
   theme(axis.text.x = element_text(angle = 70, hjust=1))  
 
 fig.unique <- hcris.data %>% group_by(year) %>%
@@ -64,7 +68,7 @@ fig.unique <- hcris.data %>% group_by(year) %>%
     y="Number of Hospitals",
     title=""
   ) + theme_bw() +
-  scale_y_continuous(labels = comma) +
+  scale_y_continuous(labels = comma, limits=c(0,6500)) +
   theme(axis.text.x = element_text(angle = 70, hjust=1))
 
 ## violin plot of total charges
@@ -123,7 +127,7 @@ pen.data <- price.data %>%
           penalty = as.numeric((hvbp_payment-hrrp_payment<0)))
 
 fig.pen <- pen.data %>% group_by(year) %>%
-  ggplot(aes(x=as.factor(year), y=hrrp_penalty, group=1)) +
+  ggplot(aes(x=as.factor(year), y=penalty, group=1)) +
   stat_summary(fun="mean", geom="line", na.rm=TRUE) +
   labs(
     x="Year",
@@ -152,26 +156,26 @@ pen.data.2012 <- pen.data %>% filter(year==2012) %>% ungroup() %>%
 
 ## average price by penalty status
 avg.pen1 <- pen.data.2012 %>%
-  group_by(hrrp_penalty) %>%
+  group_by(penalty) %>%
   summarize(mean_price=mean(price))
 
 avg.pen <- pen.data.2012 %>%
-  group_by(hrrp_penalty, bed_quart) %>% 
+  group_by(penalty, bed_quart) %>% 
   summarize(mean_price=mean(price))
 
-avg.pen.tab <- pivot_wider(avg.pen, names_from=hrrp_penalty, values_from=mean_price, names_prefix="price_")
+avg.pen.tab <- pivot_wider(avg.pen, names_from=penalty, values_from=mean_price, names_prefix="price_")
 
 
 ## matching
 match.inv <- Matching::Match(Y=pen.data.2012$price,
-                Tr=pen.data.2012$hrrp_penalty,
+                Tr=pen.data.2012$penalty,
                 X= (pen.data.2012 %>% select(bed_size1, bed_size2, bed_size3)),
                 M=1,
                 Weight=1,
                 estimand="ATE")
 
 match.mah <- Matching::Match(Y=pen.data.2012$price,
-                          Tr=pen.data.2012$hrrp_penalty,
+                          Tr=pen.data.2012$penalty,
                           X= (pen.data.2012 %>% select(bed_size1, bed_size2, bed_size3)),
                           M=1,
                           Weight=2,
@@ -179,34 +183,34 @@ match.mah <- Matching::Match(Y=pen.data.2012$price,
 
   
 ## Propensity scores and IPW
-logit.model <- glm(hrrp_penalty ~ bed_size1 + bed_size2 + bed_size3, 
+logit.model <- glm(penalty ~ bed_size1 + bed_size2 + bed_size3, 
                    family=binomial, 
                    data=pen.data.2012)
 ps <- fitted(logit.model)
 
 pen.data.2012 <- pen.data.2012 %>%
   mutate(ipw = case_when(
-    hrrp_penalty==1 ~ 1/ps,
-    hrrp_penalty==0 ~ 1/(1-ps),
+    penalty==1 ~ 1/ps,
+    penalty==0 ~ 1/(1-ps),
     TRUE ~ NA_real_
   ))
 
-mean.t1 <- pen.data.2012 %>% filter(hrrp_penalty==1) %>%
+mean.t1 <- pen.data.2012 %>% filter(penalty==1) %>%
   select(price, ipw) %>% summarize(mean_p=weighted.mean(price,w=ipw))
-mean.t0 <- pen.data.2012 %>% filter(hrrp_penalty==0) %>%
+mean.t0 <- pen.data.2012 %>% filter(penalty==0) %>%
   select(price, ipw) %>% summarize(mean_p=weighted.mean(price,w=ipw))
 ipw.diff <- mean.t1$mean_p - mean.t0$mean_p
 
-ipw.reg <- lm(price ~ hrrp_penalty, data=pen.data.2012, weights=ipw)
+ipw.reg <- lm(price ~ penalty, data=pen.data.2012, weights=ipw)
 
 
 ## Regression
 reg.data <- pen.data.2012 %>% ungroup() %>%
-  mutate(size1_diff = hrrp_penalty*(bed_size1 - mean(bed_size1)),
-         size2_diff = hrrp_penalty*(bed_size2 - mean(bed_size2)),
-         size3_diff = hrrp_penalty*(bed_size3 - mean(bed_size3)))
+  mutate(size1_diff = penalty*(bed_size1 - mean(bed_size1)),
+         size2_diff = penalty*(bed_size2 - mean(bed_size2)),
+         size3_diff = penalty*(bed_size3 - mean(bed_size3)))
 
-reg <- lm(price ~ hrrp_penalty + bed_size1 + bed_size2 + bed_size3 +
+reg <- lm(price ~ penalty + bed_size1 + bed_size2 + bed_size3 +
             size1_diff + size2_diff + size3_diff,
           data=reg.data)
 
