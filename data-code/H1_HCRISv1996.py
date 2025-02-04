@@ -6,6 +6,8 @@
 ########################################################################################
 
 import pandas as pd
+import warnings
+warnings.simplefilter('ignore')
 
 # Define the list of variables and locations
 hcris_vars = pd.DataFrame([
@@ -31,7 +33,7 @@ hcris_vars = pd.DataFrame([
 # Pull relevant data: v1996 of HCRIS forms run through 2011 due to lags in processing and hospital fiscal years
 final_hcris_v1996 = None
 
-for year in range(1998, 2002):
+for year in range(1998, 2012):
     print('Processing year:', year)
     alpha_path = f"data/input/HCRIS_v1996/HospitalFY{year}/hosp_{year}_ALPHA.CSV"
     numeric_path = f"data/input/HCRIS_v1996/HospitalFY{year}/hosp_{year}_NMRC.CSV"
