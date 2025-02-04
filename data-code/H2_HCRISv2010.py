@@ -6,6 +6,8 @@
 ########################################################################################
 
 import pandas as pd
+import warnings
+warnings.simplefilter('ignore')
 
 # Define variables and locations
 hcris_vars = [
@@ -35,7 +37,7 @@ hcris_vars_df = pd.DataFrame(hcris_vars, columns=["variable", "WKSHT_CD", "LINE_
 # Pull relevant data
 final_hcris_v2010 = pd.DataFrame()
 
-for year in range(2010, 2014):
+for year in range(2010, 2018):
     print(f"Processing year: {year}")
     hcris_alpha = pd.read_csv(f"data/input/HCRIS_v2010/HospitalFY{year}/hosp10_{year}_ALPHA.CSV", 
                               names=['RPT_REC_NUM','WKSHT_CD','LINE_NUM','CLMN_NUM','ITM_VAL_NUM'])
