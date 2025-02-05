@@ -31,40 +31,40 @@ hcris_vars = pd.DataFrame([
 ], columns=['variable', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'source'])
 
 # Pull relevant data: v1996 of HCRIS forms run through 2011 due to lags in processing and hospital fiscal years
-final_hcris_v1996 = None
+final_hcris_v1996 = pd.DataFrame()
 
 for year in range(1998, 2012):
-    print('Processing year:', year)
+    print(f"Processing year: {year}")
     alpha_path = f"data/input/HCRIS_v1996/HospitalFY{year}/hosp_{year}_ALPHA.CSV"
     numeric_path = f"data/input/HCRIS_v1996/HospitalFY{year}/hosp_{year}_NMRC.CSV"
     report_path = f"data/input/HCRIS_v1996/HospitalFY{year}/hosp_{year}_RPT.CSV"
 
-    HCRIS_alpha = pd.read_csv(alpha_path, names=['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM'])
-    HCRIS_numeric = pd.read_csv(numeric_path, names=['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM'])
-    HCRIS_report = pd.read_csv(report_path, names=['RPT_REC_NUM', 'PRVDR_CTRL_TYPE_CD', 'PRVDR_NUM', 'NPI',
-                                                   'RPT_STUS_CD', 'FY_BGN_DT', 'FY_END_DT', 'PROC_DT',
-                                                   'INITL_RPT_SW', 'LAST_RPT_SW', 'TRNSMTL_NUM', 'FI_NUM',
-                                                   'ADR_VNDR_CD', 'FI_CREAT_DT', 'UTIL_CD', 'NPR_DT',
-                                                   'SPEC_IND', 'FI_RCPT_DT'])
+    col_names = ['RPT_REC_NUM', 'WKSHT_CD', 'LINE_NUM', 'CLMN_NUM', 'ITM_VAL_NUM']
+    hcris_alpha = pd.read_csv(alpha_path, names=col_names, dtype=str)
+    hcris_numeric = pd.read_csv(numeric_path, names=col_names, dtype=str)
+    hcris_report = pd.read_csv(report_path, names=['RPT_REC_NUM', 'PRVDR_CTRL_TYPE_CD', 'PRVDR_NUM', 'NPI',
+                                                    'RPT_STUS_CD', 'FY_BGN_DT', 'FY_END_DT', 'PROC_DT',
+                                                    'INITL_RPT_SW', 'LAST_RPT_SW', 'TRNSMTL_NUM', 'FI_NUM',
+                                                    'ADR_VNDR_CD', 'FI_CREAT_DT', 'UTIL_CD', 'NPR_DT',
+                                                    'SPEC_IND', 'FI_RCPT_DT'], dtype=str)
     
-    final_reports = HCRIS_report[['RPT_REC_NUM', 'PRVDR_NUM', 'NPI', 'FY_BGN_DT', 'FY_END_DT', 'PROC_DT',
+    final_reports = hcris_report[['RPT_REC_NUM', 'PRVDR_NUM', 'NPI', 'FY_BGN_DT', 'FY_END_DT', 'PROC_DT',
                                   'FI_CREAT_DT', 'RPT_STUS_CD']]
     final_reports.columns = ['report', 'provider_number', 'npi', 'fy_start', 'fy_end', 'date_processed',
                              'date_created', 'status']
     final_reports['year'] = year
 
     for _, row in hcris_vars.iterrows():
-        hcris_data = HCRIS_numeric if row['source'] == 'numeric' else HCRIS_alpha
+        hcris_data = hcris_numeric if row['source'] == 'numeric' else hcris_alpha
         val = hcris_data[(hcris_data['WKSHT_CD'] == row['WKSHT_CD']) &
                          (hcris_data['LINE_NUM'] == row['LINE_NUM']) &
                          (hcris_data['CLMN_NUM'] == row['CLMN_NUM'])][['RPT_REC_NUM', 'ITM_VAL_NUM']]
         val.columns = ['report', row['variable']]
         final_reports = final_reports.merge(val, on='report', how='left')
-    
-    if final_hcris_v1996 is None:
-        final_hcris_v1996 = final_reports
-    else:
-        final_hcris_v1996 = pd.concat([final_hcris_v1996, final_reports], ignore_index=True)
+        if row['source'] == 'numeric':
+            final_reports[row['variable']] = final_reports[row['variable']].astype(float)
+
+    final_hcris_v1996 = pd.concat([final_hcris_v1996, final_reports], ignore_index=True)
 
 # Save final dataset
 final_hcris_v1996.to_csv('data/output/HCRIS_v1996.csv', index=False)
