@@ -4,7 +4,7 @@
 ## Title:         Econ/HLTH 470 Homework 2 Answers
 ## Author:        Ian McCarthy
 ## Date Created:  2/20/2020
-## Date Edited:   2/8/2023
+## Date Edited:   2/6/2025
 ## Description:   This file renders/runs all relevant R code for the assignment
 
 # Preliminaries -----------------------------------------------------------

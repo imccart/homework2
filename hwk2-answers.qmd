@@ -1,6 +1,6 @@
 ---
 title: "Homework 2"
-subtitle: "Research Methods, Spring 2024"
+subtitle: "Research Methods, Spring 2025"
 author: "Answer Key"
 format:
   pdf:
@@ -101,13 +101,13 @@ fig.prices
 For the rest of the assignment, you should include only observations in 2012. So we are now dealing with cross-sectional data in which some hospitals are penalized and some are not. Please also define **penalty** as whether the sum of the HRRP and HVBP amounts are negative (i.e., a net penalty under the two programs). Code to do this is in the Section 2 slides.
 
 
-\noindent 1. Calculate the average price among penalized versus non-penalized hospitals.
+\noindent 5. Calculate the average price among penalized versus non-penalized hospitals.
 
 The average price among non-penalized hospitals in 2012 is `r format(as.numeric(avg.pen1[1,2]),big.mark=",")` and the average price among penalized hospitals is `r format(as.numeric(avg.pen1[2,2],big.mark=","))`. 
 
 
 \newpage
-\noindent 2. Split hospitals into quartiles based on bed size. To do this, create 4 new indicator variables, where each variable is set to 1 if the hospital's bed size falls into the relevant quartile. Provide a table of the average price among treated/control groups for each quartile.
+\noindent 6. Split hospitals into quartiles based on bed size. To do this, create 4 new indicator variables, where each variable is set to 1 if the hospital's bed size falls into the relevant quartile. Provide a table of the average price among treated/control groups for each quartile.
 
 
 There are lots of ways to do this, but to me, the easiest way is to create 4 new variables that represent the values of each quartile. Then, we can create indicator variables for whether the bed size of a given hospital falls into the relevant range. My code for this is in the "run" file. The resulting table of mean prices by penalty status, within each quartile, is presented below in @tbl-avgprice.
@@ -127,7 +127,7 @@ knitr::kable(avg.pen.tab,
 
 
 \newpage
-\noindent 3. Find the average treatment effect using the estimators listed in the homework, and present your results in a single table.
+\noindent 7. Find the average treatment effect using the estimators listed in the homework, and present your results in a single table.
 
 
 Results are presented in @tbl-coeftable. Note that all point estimates *should* be identical provided you are using the same data in each step. If your estimates differ across estimators, then it's probably because you have some missing observations somewhere that are dropped in one analysis and not in another.
@@ -181,20 +181,25 @@ class(mod.reg) <- "modelsummary_list"
 
 modelsummary(list("INV"=match.mod.inv, "MAH"=match.mod.mah, "IPW"=mod.ipw, "OLS"=mod.reg),
              output="kableExtra") %>%
-  kable_styling(latex_options="hold_position")
+  kable_styling()
 ```
 
 
 \newpage
-\noindent 4. With these different treatment effect estimators, are the results similar, identical, very different?
+\noindent 8. With these different treatment effect estimators, are the results similar, identical, very different?
 
 We've tried lots of different estimators, and in all cases, we've gotten the exact same answer! That's pretty cool and shows us how these estimators are all trying to do the same things. Note that the equivalence between these estimators is not true in general...it's only because we're considering dummy variables as our only covariates. If we had continuous variables as covariates, then these different estimators would be similar but not identical as they are here (which is what we found in class)
 
 
 \vspace{.2in}
-\noindent 5. Do you think you've estimated a causal effect of the penalty? Why or why not? (just a couple of sentences)
+\noindent 9. Do you think you've estimated a causal effect of the penalty? Why or why not? (just a couple of sentences)
 
 I would **not** claim that we've estimated a casual effect of the penalty. Mainly, this is just cross-sectional data, and we know there are lots of systematic differences between hospitals that likely affect price and are also correlated with penalties. So I would not believe any claim that we meet the "selection on observables" assumption. 
 
+
+\vspace{.2in}
+\noindent 10. Briefly describe your experience working with these data.
+
+No wrong answers here. I'm just looking for you to reflect a little bit on this assignment.
 
 
