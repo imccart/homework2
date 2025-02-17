@@ -149,7 +149,7 @@ pen.data.2012 <- pen.data %>% filter(year==2012) %>% ungroup() %>%
   mutate(bed_size1 = ifelse(beds<beds_q1,1,0),
          bed_size2 = ifelse(beds>= beds_q1 & beds<beds_q2,1,0),
          bed_size3 = ifelse(beds>= beds_q2 & beds<beds_q3,1,0),
-         bed_size4 = ifelse(beds>  beds_q3 & beds<beds_q4,1,0),
+         bed_size4 = ifelse(beds>  beds_q3,1,0),
          bed_quart = 1*bed_size1 + 2*bed_size2 + 3*bed_size3 + 4*bed_size4) %>%
   filter(bed_quart>0)
 

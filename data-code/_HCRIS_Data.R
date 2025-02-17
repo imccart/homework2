@@ -38,7 +38,7 @@ final.hcris %>% group_by(fyear) %>% count()
 
 ## create count of reports by hospital fiscal year
 final.hcris =
-  final.hcris %>% 
+  final.hcris %>%
   add_count(provider_number, fyear, name="total_reports")
 
 ## create running total of reports
